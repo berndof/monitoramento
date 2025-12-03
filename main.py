@@ -147,6 +147,31 @@ def get_monitors():
     return monitors
 
 
+def send_f11_to_window(hwnd, title):
+    """
+    Envia a tecla F11 para a janela especificada, alternando para tela cheia.
+    Requer que a janela esteja em primeiro plano.
+    """
+    # Códigos de tecla virtual (VK_F11) e flags para envio de input
+    VK_F11 = 0x7A
+    KEYEVENTF_KEYUP = 0x0002
+    try:
+        # Certifica-se que a janela está ativa (embora já seja feito em move_window_to_monitor)
+        win32gui.SetForegroundWindow(hwnd)
+        time.sleep(0.5)  # Pequena pausa para garantir que o SO reconheça a janela ativa
+
+        # Simula o pressionamento da tecla F11 (Key Down)
+        win32api.keybd_event(VK_F11, 0, 0, 0)
+
+        # Simula a liberação da tecla F11 (Key Up)
+        win32api.keybd_event(VK_F11, 0, KEYEVENTF_KEYUP, 0)
+
+        logger.info(f"Tecla F11 (Fullscreen) enviada para a janela '{title}'.")
+
+    except Exception as e:
+        logger.error(f"Erro ao enviar F11 para '{title}': {e}")
+
+
 def main():
     logger.info("Iniciando o script de gerenciamento de janelas.")
 
@@ -197,6 +222,10 @@ def main():
             if fnmatch.fnmatchcase(title, title_pattern) and title not in moved_titles:
                 try:
                     move_window_to_monitor(hwnd, monitor_index, title)
+
+                    # Passo 2: Coloca a janela em tela cheia (Fullscreen)
+                    send_f11_to_window(hwnd, title)
+
                     moved_titles.add(title)  # Marca a janela como movida
                     break
                 except Exception as e:
